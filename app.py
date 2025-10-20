@@ -18,9 +18,9 @@ def init_state():
         "Action", "Action", "Science Fiction", "Animation", "Animation"
     ]
 
-    st.session_state.rented_movies = []
+    st.session_state.rented_movies = []      # stores 1..N
     st.session_state.last_rented_genre = ""
-    st.session_state.phase = "rent"
+    st.session_state.phase = "rent"          # rent -> return -> done
     st.session_state.prompt_shown = False
     st.session_state.log = []
 
@@ -34,9 +34,6 @@ def print_with_leading_newline(s):
     st.session_state.log.append(s)
 
 
-# -----------------------------
-# Helpers
-# -----------------------------
 def render_console(placeholder):
     placeholder.code("\n".join(st.session_state.log), language=None)
 
@@ -60,7 +57,7 @@ def process_rent_input(user_text):
         st.session_state.phase = "return"
         print_with_leading_newline("Thank you for using our rental service. See you soon!")
         st.session_state.prompt_shown = False
-        return
+        st.rerun()  # ← muestra inmediatamente la fase de devolución
 
     if 1 <= selection <= len(catalog) and selection not in rented:
         rented.append(selection)
@@ -86,7 +83,6 @@ def rent_phase():
     catalog = st.session_state.catalog_movies
     genres = st.session_state.genres
 
-    # Placeholder para que el log quede ARRIBA
     console_placeholder = st.empty()
 
     if not st.session_state.prompt_shown:
@@ -96,16 +92,14 @@ def rent_phase():
         print_with_leading_newline("What movie would you like to rent (enter the number or '0' to exit)?")
         st.session_state.prompt_shown = True
 
-    # Formulario (debajo del log)
+    # Form (input after output)
     with st.form("rent_form", clear_on_submit=True):
         user_text = st.text_input("", key="rent_input", label_visibility="collapsed")
         submitted = st.form_submit_button("Enter")
 
-    # 1) Procesar primero
     if submitted:
         process_rent_input(user_text)
 
-    # 2) Renderizar el log DESPUÉS de procesar (pero arriba gracias al placeholder)
     render_console(console_placeholder)
 
 
@@ -127,9 +121,8 @@ def process_return_input(user_text):
         st.session_state.phase = "done"
         print_with_leading_newline("Thank you for using our returning service. See you soon!")
         st.session_state.prompt_shown = False
-        return
-
-    if 1 <= selection <= len(rented):
+        st.rerun()  # ← finaliza inmediatamente
+    elif 1 <= selection <= len(rented):
         title = catalog[rented[selection - 1] - 1]
         print_with_leading_newline("You have returned " + title)
         rented.pop(selection - 1)
