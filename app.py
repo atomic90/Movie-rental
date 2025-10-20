@@ -34,8 +34,11 @@ def print_with_leading_newline(s):
     st.session_state.log.append(s)
 
 
-def show_console():
-    st.code("\n".join(st.session_state.log), language=None)
+# -----------------------------
+# Helpers
+# -----------------------------
+def render_console(placeholder):
+    placeholder.code("\n".join(st.session_state.log), language=None)
 
 
 # -----------------------------
@@ -83,6 +86,9 @@ def rent_phase():
     catalog = st.session_state.catalog_movies
     genres = st.session_state.genres
 
+    # Placeholder para que el log quede ARRIBA
+    console_placeholder = st.empty()
+
     if not st.session_state.prompt_shown:
         print_with_leading_newline("Movie Catalog:")
         for i in range(len(catalog)):
@@ -90,15 +96,17 @@ def rent_phase():
         print_with_leading_newline("What movie would you like to rent (enter the number or '0' to exit)?")
         st.session_state.prompt_shown = True
 
-    # Show console FIRST
-    show_console()
-
-    # Input box comes AFTER the output
+    # Formulario (debajo del log)
     with st.form("rent_form", clear_on_submit=True):
         user_text = st.text_input("", key="rent_input", label_visibility="collapsed")
         submitted = st.form_submit_button("Enter")
+
+    # 1) Procesar primero
     if submitted:
         process_rent_input(user_text)
+
+    # 2) Renderizar el log DESPUÉS de procesar (pero arriba gracias al placeholder)
+    render_console(console_placeholder)
 
 
 # -----------------------------
@@ -136,11 +144,13 @@ def return_phase():
     catalog = st.session_state.catalog_movies
     genres = st.session_state.genres
 
+    console_placeholder = st.empty()
+
     if len(rented) == 0:
         print_line("You have not rented movies.")
         st.session_state.phase = "done"
         st.session_state.prompt_shown = False
-        show_console()
+        render_console(console_placeholder)
         return
 
     if not st.session_state.prompt_shown:
@@ -152,15 +162,14 @@ def return_phase():
         print_with_leading_newline("Which movie would you like to return (enter the number or '0' to exit)?")
         st.session_state.prompt_shown = True
 
-    # Show console FIRST
-    show_console()
-
-    # Input box AFTER output
     with st.form("return_form", clear_on_submit=True):
         user_text = st.text_input("", key="return_input", label_visibility="collapsed")
         submitted = st.form_submit_button("Enter")
+
     if submitted:
         process_return_input(user_text)
+
+    render_console(console_placeholder)
 
 
 # -----------------------------
@@ -176,4 +185,4 @@ if st.session_state.phase == "rent":
 elif st.session_state.phase == "return":
     return_phase()
 else:
-    show_console()
+    st.code("\n".join(st.session_state.log), language=None)
