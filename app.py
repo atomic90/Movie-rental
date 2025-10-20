@@ -57,7 +57,7 @@ def process_rent_input(user_text):
         st.session_state.phase = "return"
         print_with_leading_newline("Thank you for using our rental service. See you soon!")
         st.session_state.prompt_shown = False
-        st.rerun()  # ← muestra inmediatamente la fase de devolución
+        st.rerun()  # saltar inmediatamente a la fase de devolución
 
     if 1 <= selection <= len(catalog) and selection not in rented:
         rented.append(selection)
@@ -92,7 +92,6 @@ def rent_phase():
         print_with_leading_newline("What movie would you like to rent (enter the number or '0' to exit)?")
         st.session_state.prompt_shown = True
 
-    # Form (input after output)
     with st.form("rent_form", clear_on_submit=True):
         user_text = st.text_input("", key="rent_input", label_visibility="collapsed")
         submitted = st.form_submit_button("Enter")
@@ -121,15 +120,21 @@ def process_return_input(user_text):
         st.session_state.phase = "done"
         print_with_leading_newline("Thank you for using our returning service. See you soon!")
         st.session_state.prompt_shown = False
-        st.rerun()  # ← finaliza inmediatamente
+        st.rerun()  # finalizar de inmediato
+
     elif 1 <= selection <= len(rented):
         title = catalog[rented[selection - 1] - 1]
         print_with_leading_newline("You have returned " + title)
         rented.pop(selection - 1)
+
+        # tras devolver, refrescar para volver a mostrar la lista actualizada
+        st.session_state.prompt_shown = False
+        st.rerun()
+
     else:
         print_with_leading_newline("Invalid movie number. Please try again.")
-
-    st.session_state.prompt_shown = False
+        st.session_state.prompt_shown = False
+        # no rerun necesario; el usuario verá el mensaje y el prompt de nuevo
 
 
 def return_phase():
@@ -139,6 +144,7 @@ def return_phase():
 
     console_placeholder = st.empty()
 
+    # si ya no hay alquiladas, comportamiento idéntico al script
     if len(rented) == 0:
         print_line("You have not rented movies.")
         st.session_state.phase = "done"
